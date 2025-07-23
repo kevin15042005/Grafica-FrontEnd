@@ -29,19 +29,18 @@ const TabPlataformas = ({ tipo }) => {
     }
   };
 
-  useEffect(() => {
-    cargarDatos();
-    const intervalo = setInterval(() => cargarDatos(), 30000);
-    return () => clearInterval(intervalo);
-  }, [tipo]);
+ useEffect(() => {
+  cargarDatos();
+  const intervalo = setInterval(() => cargarDatos(), 300000); 
+  return () => clearInterval(intervalo);
+}, [tipo]);
 
   const datosFiltrados = datos.filter(item =>
     item.plataforma.toLowerCase().includes(filtro.toLowerCase())
   );
 
   const getColorPorPorcentaje = (porcentaje) => {
-    if (porcentaje >= 75) return '#4CAF50';  // Verde
-    if (porcentaje >= 40) return '#FFC107';  // Amarillo
+    if (porcentaje >= 75) return '#4CAF50';  
     return '#F44336';  // Rojo
   };
 
@@ -175,14 +174,14 @@ const App = () => {
       
       <div className="tabs">
         <button
-          className={tabActivo === 'inhouse' ? 'activo' : ''}
-          onClick={() => setTabActivo('inhouse')}
+          className={tabActivo === 'vendor' ? 'activo' : ''}
+          onClick={() => setTabActivo('vendor')}
         >
           Vendor
         </button>
         <button
-          className={tabActivo === 'vendor' ? 'activo' : ''}
-          onClick={() => setTabActivo('vendor')}
+          className={tabActivo === 'inhouse' ? 'activo' : ''}
+          onClick={() => setTabActivo('inhouse')}
         >
           Inhouse
         </button>
