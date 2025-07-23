@@ -118,7 +118,7 @@ const TabPlataformas = ({ tipo }) => {
         <div className="buscador">
           <input
             type="text"
-            placeholder={`Buscar plataforma ${tipo}...`}
+            placeholder={`Buscar plataforma`}
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
@@ -132,7 +132,7 @@ const TabPlataformas = ({ tipo }) => {
       </div>
 
       {cargando ? (
-        <div className="cargando">Cargando plataformas {tipo}...</div>
+        <div className="cargando">Cargando plataforma</div>
       ) : datosFiltrados.length === 0 ? (
         <div className="sin-datos">
           {filtro
@@ -190,21 +190,21 @@ const App = () => {
           className={tabActivo === "vendor" ? "activo" : ""}
           onClick={() => setTabActivo("vendor")}
         >
-          Vendor
+          Inhouse
         </button>
         <button
           className={tabActivo === "inhouse" ? "activo" : ""}
           onClick={() => setTabActivo("inhouse")}
         >
-          Inhouse
+          Vendors
         </button>
       </div>
 
       <div className="tab-container">
-        {tabActivo === "inhouse" ? (
-          <TabPlataformas tipo="inhouse" />
-        ) : (
+        {tabActivo === "vendor" ? (
           <TabPlataformas tipo="vendor" />
+        ) : (
+          <TabPlataformas tipo="inhouse" />
         )}
       </div>
     </div>
