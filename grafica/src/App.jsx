@@ -8,34 +8,19 @@ const TabPlataformas = ({ tipo }) => {
   const [filtro, setFiltro] = useState('');
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState('');
-  const [ultimaModificacion, setUltimaModificacion] = useState(0);
 
-  const cargarDatos = async (forzar = false) => {
+  const cargarDatos = async () => {
     try {
-      // Primero verificar si hubo cambios
-      const verificacion = await axios.get(
-        'https://grafica-bakend.onrender.com/porcentajes/verificar-actualizacion'
-      );
-      
-      const modificacionActual = verificacion.data[tipo]?.modificado || 0;
-      
-      if (!forzar && modificacionActual <= ultimaModificacion) {
-        // No hay cambios, no es necesario recargar
-        setUltimaActualizacion(new Date().toLocaleTimeString());
-        return;
-      }
-      
       setCargando(true);
       const response = await axios.get(
-        `https://grafica-bakend.onrender.com/porcentajes/${tipo}?timestamp=${Date.now()}`
+        `http://localhost:8080/porcentajes/${tipo}?timestamp=${Date.now()}`
       );
-      
-      const datosOrdenados = [...response.data].sort((a, b) => 
+
+      const datosOrdenados = [...response.data].sort((a, b) =>
         a.plataforma.localeCompare(b.plataforma)
       );
-      
+
       setDatos(datosOrdenados);
-      setUltimaModificacion(modificacionActual);
       setUltimaActualizacion(new Date().toLocaleTimeString());
     } catch (err) {
       console.error(`Error cargando ${tipo}:`, err);
@@ -45,9 +30,8 @@ const TabPlataformas = ({ tipo }) => {
   };
 
   useEffect(() => {
-    cargarDatos(true); // Carga inicial forzada
-    
-    const intervalo = setInterval(() => cargarDatos(), 30000); // Verificar cada 30 segundos
+    cargarDatos();
+    const intervalo = setInterval(() => cargarDatos(), 30000);
     return () => clearInterval(intervalo);
   }, [tipo]);
 
@@ -55,14 +39,10 @@ const TabPlataformas = ({ tipo }) => {
     item.plataforma.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  const getColorGradient = (porcentaje) => {
-    if (porcentaje < 50) {
-      const intensity = porcentaje / 50;
-      return `rgb(255, ${Math.floor(255 * intensity)}, 0)`;
-    } else {
-      const intensity = (porcentaje - 50) / 50;
-      return `rgb(${Math.floor(255 * (1 - intensity))}, 255, 0)`;
-    }
+  const getColorPorPorcentaje = (porcentaje) => {
+    if (porcentaje >= 75) return '#4CAF50';  // Verde
+    if (porcentaje >= 40) return '#FFC107';  // Amarillo
+    return '#F44336';  // Rojo
   };
 
   const opcionesGrafica = {
@@ -72,10 +52,11 @@ const TabPlataformas = ({ tipo }) => {
         const item = params.data;
         return `
           <strong>${item.plataforma}</strong><br/>
-          Completado: ${item.porcentaje}% (${item.verde}/${item.totalCasillas})<br/>
-          Verde: ${item.verde} | Amarillo: ${item.amarillo}<br/>
-          Naranja: ${item.naranja} | Azul: ${item.azul}<br/>
-          Rojo: ${item.rojo}
+          Progreso: ${item.porcentaje}% (${item.completadas}/9 columnas)<br/>
+          <hr style="margin: 5px 0; opacity: 0.2"/>
+          ${item.detalle.map(d => 
+            `${d.nombre}: ${d.completada ? '✅' : '❌'}`
+          ).join('<br/>')}
         `;
       }
     },
@@ -113,7 +94,7 @@ const TabPlataformas = ({ tipo }) => {
         name: item.plataforma,
         ...item,
         itemStyle: {
-          color: getColorGradient(item.porcentaje),
+          color: getColorPorPorcentaje(item.porcentaje),
           borderRadius: [4, 4, 0, 0]
         }
       })),
@@ -122,7 +103,7 @@ const TabPlataformas = ({ tipo }) => {
         position: 'top',
         formatter: (params) => {
           const data = params.data;
-          return `${data.porcentaje}% (${data.verde}/${data.totalCasillas})`;
+          return `${data.porcentaje}% (${data.completadas}/9)`;
         },
         fontSize: 10
       },
@@ -143,7 +124,7 @@ const TabPlataformas = ({ tipo }) => {
         </div>
         <div className="actualizacion">
           <span>Últ. act: {ultimaActualizacion}</span>
-          <button onClick={() => cargarDatos(true)} title="Actualizar ahora">
+          <button onClick={cargarDatos} title="Actualizar ahora">
             ↻
           </button>
         </div>
@@ -167,10 +148,19 @@ const TabPlataformas = ({ tipo }) => {
         </div>
       )}
 
-      <div className="leyenda-gradiente">
-        <span>0% (Crítico)</span>
-        <div className="gradiente"></div>
-        <span>100% (Óptimo)</span>
+      <div className="leyenda">
+        <div className="leyenda-item">
+          <span className="leyenda-color" style={{backgroundColor: '#4CAF50'}}></span>
+          <span>75-100% (Óptimo)</span>
+        </div>
+        <div className="leyenda-item">
+          <span className="leyenda-color" style={{backgroundColor: '#FFC107'}}></span>
+          <span>40-74% (En progreso)</span>
+        </div>
+        <div className="leyenda-item">
+          <span className="leyenda-color" style={{backgroundColor: '#F44336'}}></span>
+          <span>0-39% (Pendiente)</span>
+        </div>
       </div>
     </div>
   );
@@ -181,20 +171,20 @@ const App = () => {
 
   return (
     <div className="contenedor">
-      <h1>Dashboard de Plataformas</h1>
+      <h1>Dashboard de Progreso de Plataformas</h1>
       
       <div className="tabs">
         <button
           className={tabActivo === 'inhouse' ? 'activo' : ''}
           onClick={() => setTabActivo('inhouse')}
         >
-          Inhouse
+          Vendor
         </button>
         <button
           className={tabActivo === 'vendor' ? 'activo' : ''}
           onClick={() => setTabActivo('vendor')}
         >
-          Vendor
+          Inhouse
         </button>
       </div>
 
