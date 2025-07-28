@@ -159,7 +159,7 @@ const TabPlataformas = ({ tipo }) => {
       </div>
 
       {cargando ? (
-        <div className="cargando">Cargando plataformas {tipo}...</div>
+        <div className="cargando">Cargando plataforma</div>
       ) : datosFiltrados.length === 0 ? (
         <div className="sin-datos">
           {filtroPlataforma || filtroDueño
