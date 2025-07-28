@@ -208,13 +208,13 @@ const App = () => {
           className={tabActivo === "vendor" ? "activo" : ""}
           onClick={() => setTabActivo("vendor")}
         >
-          Vendor
+          Inhouse
         </button>
         <button
           className={tabActivo === "inhouse" ? "activo" : ""}
           onClick={() => setTabActivo("inhouse")}
         >
-          Inhouse
+          Vendor
         </button>
       </div>
 
