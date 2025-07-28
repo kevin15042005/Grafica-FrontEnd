@@ -5,18 +5,32 @@ import "./App.css";
 
 const TabPlataformas = ({ tipo }) => {
   const [datos, setDatos] = useState([]);
-  const [filtro, setFiltro] = useState("");
+  const [filtroPlataforma, setFiltroPlataforma] = useState("");
+  const [filtroDueño, setFiltroDueño] = useState("");
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState("");
+
+  const normalizarDueño = (dueño) => {
+    if (!dueño || dueño === "#N/A") return "NO ASIGNADO";
+    return dueño.toUpperCase(); // Aseguramos mayúsculas
+  };
 
   const cargarDatos = async () => {
     try {
       setCargando(true);
+      const params = new URLSearchParams();
+      if (filtroDueño) params.append("dueño", filtroDueño.toUpperCase()); // Enviamos en mayúsculas
+
       const response = await axios.get(
-        `https://grafica-bakend.onrender.com/porcentajes/${tipo}?timestamp=${Date.now()}`
+        `https://grafica-bakend.onrender.com/porcentajes/${tipo}?${params.toString()}`
       );
 
-      const datosOrdenados = [...response.data].sort((a, b) =>
+      const datosLimpios = response.data.map((item) => ({
+        ...item,
+        dueño: normalizarDueño(item.dueño),
+      }));
+
+      const datosOrdenados = [...datosLimpios].sort((a, b) =>
         a.plataforma.localeCompare(b.plataforma)
       );
 
@@ -33,15 +47,17 @@ const TabPlataformas = ({ tipo }) => {
     cargarDatos();
     const intervalo = setInterval(() => cargarDatos(), 300000);
     return () => clearInterval(intervalo);
-  }, [tipo]);
+  }, [tipo, filtroDueño]);
 
   const datosFiltrados = datos.filter((item) =>
-    item.plataforma.toLowerCase().includes(filtro.toLowerCase())
+    item.plataforma?.toLowerCase().includes(filtroPlataforma.toLowerCase()) &&
+    (filtroDueño === "" || item.dueño?.includes(filtroDueño.toUpperCase())) // Filtro local en mayúsculas
   );
 
   const getColorPorPorcentaje = (porcentaje) => {
     if (porcentaje >= 75) return "#4CAF50";
-    return "#F44336"; // Rojo
+    if (porcentaje >= 40) return "#FFC107";
+    return "#F44336";
   };
 
   const opcionesGrafica = {
@@ -51,7 +67,8 @@ const TabPlataformas = ({ tipo }) => {
         const item = params.data;
         return `
           <strong>${item.plataforma}</strong><br/>
-          Progreso: ${item.porcentaje}% (${item.completadas}/9 columnas)<br/>
+          Dueño: ${item.dueño}<br/>
+          Progreso: ${item.porcentaje}% (${item.completadas}/${item.totalColumnas})<br/>
           <hr style="margin: 5px 0; opacity: 0.2"/>
           ${item.detalle
             .map((d) => `${d.nombre}: ${d.completada ? "✅" : "❌"}`)
@@ -91,7 +108,7 @@ const TabPlataformas = ({ tipo }) => {
         type: "bar",
         data: datosFiltrados.map((item) => ({
           value: item.porcentaje,
-          name: item.plataforma,
+          name: `${item.plataforma} (${item.dueño})`,
           ...item,
           itemStyle: {
             color: getColorPorPorcentaje(item.porcentaje),
@@ -103,7 +120,7 @@ const TabPlataformas = ({ tipo }) => {
           position: "top",
           formatter: (params) => {
             const data = params.data;
-            return `${data.porcentaje}% (${data.completadas}/9)`;
+            return `${data.porcentaje}% (${data.completadas}/${data.totalColumnas})`;
           },
           fontSize: 10,
         },
@@ -115,28 +132,38 @@ const TabPlataformas = ({ tipo }) => {
   return (
     <div className="tab-content">
       <div className="header-tab">
-        <div className="buscador">
-          <input
-            type="text"
-            placeholder={`Buscar plataforma`}
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-          />
-        </div>
-        <div className="actualizacion">
-          <span>Últ. act: {ultimaActualizacion}</span>
-          <button onClick={cargarDatos} title="Actualizar ahora">
-            ↻
-          </button>
+        <div className="filtros-container">
+          <div className="buscador">
+            <input
+              type="text"
+              placeholder="Buscar plataforma..."
+              value={filtroPlataforma}
+              onChange={(e) => setFiltroPlataforma(e.target.value)}
+            />
+          </div>
+          <div className="buscador">
+            <input
+              type="text"
+              placeholder="Filtrar por dueño..."
+              value={filtroDueño}
+              onChange={(e) => setFiltroDueño(e.target.value)}
+            />
+          </div>
+          <div className="actualizacion">
+            <span>Últ. act: {ultimaActualizacion}</span>
+            <button onClick={cargarDatos} title="Actualizar ahora">
+              ↻
+            </button>
+          </div>
         </div>
       </div>
 
       {cargando ? (
-        <div className="cargando">Cargando plataforma</div>
+        <div className="cargando">Cargando plataformas {tipo}...</div>
       ) : datosFiltrados.length === 0 ? (
         <div className="sin-datos">
-          {filtro
-            ? "No hay resultados para la búsqueda"
+          {filtroPlataforma || filtroDueño
+            ? "No hay resultados para los filtros aplicados"
             : `No hay plataformas ${tipo}`}
         </div>
       ) : (
@@ -144,8 +171,8 @@ const TabPlataformas = ({ tipo }) => {
           <ReactECharts
             option={opcionesGrafica}
             style={{
-              height: "400px",
-              minWidth: `${Math.max(600, datosFiltrados.length * 50)}px`,
+              height: "450px",
+              minWidth: `${Math.max(600, datosFiltrados.length * 60)}px`,
             }}
           />
         </div>
@@ -153,24 +180,15 @@ const TabPlataformas = ({ tipo }) => {
 
       <div className="leyenda">
         <div className="leyenda-item">
-          <span
-            className="leyenda-color"
-            style={{ backgroundColor: "#4CAF50" }}
-          ></span>
+          <span className="leyenda-color" style={{ backgroundColor: "#4CAF50" }}></span>
           <span>75-100% (Óptimo)</span>
         </div>
         <div className="leyenda-item">
-          <span
-            className="leyenda-color"
-            style={{ backgroundColor: "#FFC107" }}
-          ></span>
+          <span className="leyenda-color" style={{ backgroundColor: "#FFC107" }}></span>
           <span>40-74% (En progreso)</span>
         </div>
         <div className="leyenda-item">
-          <span
-            className="leyenda-color"
-            style={{ backgroundColor: "#F44336" }}
-          ></span>
+          <span className="leyenda-color" style={{ backgroundColor: "#F44336" }}></span>
           <span>0-39% (Pendiente)</span>
         </div>
       </div>
@@ -179,7 +197,7 @@ const TabPlataformas = ({ tipo }) => {
 };
 
 const App = () => {
-  const [tabActivo, setTabActivo] = useState("inhouse");
+  const [tabActivo, setTabActivo] = useState("vendor");
 
   return (
     <div className="contenedor">
@@ -190,13 +208,13 @@ const App = () => {
           className={tabActivo === "vendor" ? "activo" : ""}
           onClick={() => setTabActivo("vendor")}
         >
-          Inhouse
+          Vendor
         </button>
         <button
           className={tabActivo === "inhouse" ? "activo" : ""}
           onClick={() => setTabActivo("inhouse")}
         >
-          Vendors
+          Inhouse
         </button>
       </div>
 
