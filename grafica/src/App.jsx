@@ -83,7 +83,7 @@ const TabPlataformas = ({ tipo }) => {
           } else if (!estado || estado === "0") {
             return `${d.nombre}: ❌`;
           } else {
-            return `${d.nombre}: ${d.estado}`;
+            return `${d.nombre}: <strong>${d.estado}</strong>`;
           }
         })
         .join("<br/>")}
