@@ -3,6 +3,8 @@ import ReactECharts from "echarts-for-react";
 import axios from "axios";
 import "./App.css";
 
+//Completado
+
 const TabPlataformas = ({ tipo }) => {
   const [datos, setDatos] = useState([]);
   const [filtroPlataforma, setFiltroPlataforma] = useState("");
