@@ -19,11 +19,13 @@ const TabPlataformas = ({ tipo }) => {
     try {
       setCargando(true);
       const params = new URLSearchParams();
-      if (filtroDueño) params.append("dueño", filtroDueño.toUpperCase()); // Enviamos en mayúsculas
+      if (filtroDueño) params.append("dueño", filtroDueño.toUpperCase());
 
       const response = await axios.get(
         `https://grafica-bakend.onrender.com/porcentajes/${tipo}?${params.toString()}`
       );
+
+      console.log("✅ Datos cargados:", response.data); // ✅ aquí sí puedes acceder a response
 
       const datosLimpios = response.data.map((item) => ({
         ...item,
@@ -37,7 +39,7 @@ const TabPlataformas = ({ tipo }) => {
       setDatos(datosOrdenados);
       setUltimaActualizacion(new Date().toLocaleTimeString());
     } catch (err) {
-      console.error(`Error cargando ${tipo}:`, err);
+      console.error(`❌ Error cargando ${tipo}:`, err);
     } finally {
       setCargando(false);
     }
@@ -49,9 +51,10 @@ const TabPlataformas = ({ tipo }) => {
     return () => clearInterval(intervalo);
   }, [tipo, filtroDueño]);
 
-  const datosFiltrados = datos.filter((item) =>
-    item.plataforma?.toLowerCase().includes(filtroPlataforma.toLowerCase()) &&
-    (filtroDueño === "" || item.dueño?.includes(filtroDueño.toUpperCase())) // Filtro local en mayúsculas
+  const datosFiltrados = datos.filter(
+    (item) =>
+      item.plataforma?.toLowerCase().includes(filtroPlataforma.toLowerCase()) &&
+      (filtroDueño === "" || item.dueño?.includes(filtroDueño.toUpperCase())) // Filtro local en mayúsculas
   );
 
   const getColorPorPorcentaje = (porcentaje) => {
@@ -66,14 +69,25 @@ const TabPlataformas = ({ tipo }) => {
       formatter: (params) => {
         const item = params.data;
         return `
-          <strong>${item.plataforma}</strong><br/>
-          Dueño: ${item.dueño}<br/>
-          Progreso: ${item.porcentaje}% (${item.completadas}/${item.totalColumnas})<br/>
-          <hr style="margin: 5px 0; opacity: 0.2"/>
-          ${item.detalle
-            .map((d) => `${d.nombre}: ${d.completada ? "✅" : "❌"}`)
-            .join("<br/>")}
-        `;
+      <strong>${item.plataforma}</strong><br/>
+      Dueño: ${item.dueño}<br/>
+      Progreso: ${item.porcentaje}% (${item.completadas}/${
+          item.totalColumnas
+        })<br/>
+      <hr style="margin: 5px 0; opacity: 0.2"/>
+      ${item.detalle
+        .map((d) => {
+          const estado = d.estado?.toString().trim().toUpperCase();
+          if (estado === "1" || estado === "TRUE") {
+            return `${d.nombre}: ✅`;
+          } else if (!estado || estado === "0") {
+            return `${d.nombre}: ❌`;
+          } else {
+            return `${d.nombre}: ${d.estado}`;
+          }
+        })
+        .join("<br/>")}
+    `;
       },
     },
     grid: {
@@ -180,15 +194,24 @@ const TabPlataformas = ({ tipo }) => {
 
       <div className="leyenda">
         <div className="leyenda-item">
-          <span className="leyenda-color" style={{ backgroundColor: "#4CAF50" }}></span>
+          <span
+            className="leyenda-color"
+            style={{ backgroundColor: "#4CAF50" }}
+          ></span>
           <span>75-100% (Óptimo)</span>
         </div>
         <div className="leyenda-item">
-          <span className="leyenda-color" style={{ backgroundColor: "#FFC107" }}></span>
+          <span
+            className="leyenda-color"
+            style={{ backgroundColor: "#FFC107" }}
+          ></span>
           <span>40-74% (En progreso)</span>
         </div>
         <div className="leyenda-item">
-          <span className="leyenda-color" style={{ backgroundColor: "#F44336" }}></span>
+          <span
+            className="leyenda-color"
+            style={{ backgroundColor: "#F44336" }}
+          ></span>
           <span>0-39% (Pendiente)</span>
         </div>
       </div>
