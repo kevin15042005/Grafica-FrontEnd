@@ -167,6 +167,15 @@ h1 {
   font-weight: bold;
 }
 
+.filtros-container{
+  display: grid;
+} 
+.filtros-container input{
+  border: solid 2px ;
+  margin-top: 5px;
+  border-radius: 10px;
+  padding: 10px;
+}
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   height: 8px;
@@ -217,5 +226,51 @@ h1 {
   .actualizacion {
     justify-content: flex-end;
   }
+  .filtros-container{
+  display: grid;
+} 
+.filtros-container input{
+  border: solid 2px ;
+  margin-top: 5px;
+  border-radius: 10px;
+  padding: 10px;
+  width: 30%;
+}
 }
 
+/* Ajustes específicos para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .header-tab {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .buscador {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .buscador input {
+    width: 100%;
+  }
+
+  .actualizacion {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .actualizacion button {
+    font-size: 1rem;
+  }
+    .filtros-container{
+  display: grid;
+} 
+.filtros-container input{
+  border: solid 2px ;
+  margin-top: 5px;
+  border-radius: 10px;
+  padding: 10px;
+  width: 30%;
+}
+}
