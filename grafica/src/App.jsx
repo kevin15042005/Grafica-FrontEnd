@@ -4,6 +4,7 @@ import axios from "axios";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import "./App.css";
 
 // ==========================
 // COMPONENTE GRAFICAS
@@ -50,7 +51,7 @@ const TabPlataformas = ({ tipo }) => {
 
   useEffect(() => {
     cargarDatos();
-    const intervalo = setInterval(cargarDatos, 300000);
+    const intervalo = setInterval(cargarDatos, 300000); // refresco cada 5 min
     return () => clearInterval(intervalo);
   }, [cargarDatos]);
 
@@ -115,42 +116,38 @@ const TabPlataformas = ({ tipo }) => {
   };
 
   return (
-    <div className="tab-content p-4">
-      <div className="header-tab flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-4">
-        <div className="flex gap-2 flex-wrap">
+    <div className="tab-content">
+      <div className="header-tab">
+        <div className="filtros-container">
           <input
             type="text"
             placeholder="Buscar plataforma..."
             value={filtroPlataforma}
             onChange={(e) => setFiltroPlataforma(e.target.value)}
-            className="px-2 py-1 border rounded text-sm"
           />
           <input
             type="text"
             placeholder="Filtrar por dueño..."
             value={filtroDueño}
             onChange={(e) => setFiltroDueño(e.target.value)}
-            className="px-2 py-1 border rounded text-sm"
           />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Últ. act: {ultimaActualizacion}</span>
-          <button onClick={cargarDatos} title="Actualizar ahora" className="px-2 py-1 border rounded hover:bg-gray-100">
-            ↻
-          </button>
+          <div className="actualizacion">
+            <span>Últ. act: {ultimaActualizacion}</span>
+            <button onClick={cargarDatos} title="Actualizar ahora">↻</button>
+          </div>
         </div>
       </div>
 
       {cargando ? (
-        <div className="text-center text-gray-500">Cargando plataforma...</div>
+        <div className="cargando">Cargando plataforma</div>
       ) : datosFiltrados.length === 0 ? (
-        <div className="text-center text-gray-500">
+        <div className="sin-datos">
           {filtroPlataforma || filtroDueño
             ? "No hay resultados para los filtros aplicados"
             : `No hay plataformas ${tipo}`}
         </div>
       ) : (
-        <div className="grafica-container overflow-x-auto">
+        <div className="grafica-container">
           <ReactECharts
             option={opcionesGrafica}
             style={{ height: "450px", minWidth: `${Math.max(600, datosFiltrados.length * 60)}px` }}
@@ -196,15 +193,17 @@ const Calendario = () => {
     cargarEventos();
   }, [cargarEventos]);
 
-  if (cargando) return <div className="text-center p-4 text-gray-500">Cargando calendario...</div>;
+  if (cargando) return <div className="cargando">Cargando calendario...</div>;
 
   return (
-    <div className="p-4 max-w-[1200px] mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Calendario de Eventos</h2>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Últ. act: {ultimaActualizacion}</span>
-          <button onClick={cargarEventos} className="px-2 py-1 border rounded hover:bg-gray-100 text-sm">
+    <div style={{ maxWidth: "1200px", margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", alignItems: "center" }}>
+        <h2 style={{ fontSize: "1.2rem" }}>Calendario de Eventos</h2>
+        <div>
+          <span style={{ marginRight: "10px", fontSize: "0.8rem", color: "#555" }}>
+            Últ. act: {ultimaActualizacion}
+          </span>
+          <button onClick={cargarEventos} style={{ padding: "4px 8px", cursor: "pointer", fontSize: "0.8rem" }}>
             ↻ Actualizar
           </button>
         </div>
@@ -220,19 +219,13 @@ const Calendario = () => {
           center: "title",
           right: "dayGridMonth,dayGridWeek"
         }}
-        eventContent={(eventInfo) => (
-          <div className="text-center p-1">
-            <div className="font-bold text-xs">{eventInfo.event.extendedProps.dueño}</div>
-            <div className="text-xs">{eventInfo.event.title}</div>
-          </div>
-        )}
         eventClick={(info) => {
           info.jsEvent.preventDefault();
           alert(
-            `Dueño: ${info.event.extendedProps?.dueño}\n` +
+            `Dueño: ${info.event.extendedProps.dueño}\n` +
             `Plataforma: ${info.event.title}\n` +
-            `Fecha: ${info.event.start.toLocaleDateString("es-ES")}\n` +
-            `Descripción: ${info.event.extendedProps?.description || "Sin detalles"}`
+            `Descripción: ${info.event.extendedProps?.description || "Sin detalles"}\n` +
+            `Fecha: ${info.event.start.toLocaleDateString("es-ES")}`
           );
         }}
       />
@@ -247,23 +240,23 @@ const App = () => {
   const [tabActivo, setTabActivo] = useState("inhouse");
 
   return (
-    <div className="contenedor p-4">
-      <h1 className="text-2xl font-bold mb-4">Dashboard de Progreso de Plataformas</h1>
-      <div className="tabs flex gap-2 mb-4">
+    <div className="contenedor">
+      <h1>Dashboard de Progreso de Plataformas</h1>
+      <div className="tabs">
         <button 
-          className={`px-3 py-1 rounded ${tabActivo === "inhouse" ? "bg-blue-500 text-white" : "bg-gray-200"}`} 
+          className={tabActivo === "inhouse" ? "activo" : ""} 
           onClick={() => setTabActivo("inhouse")}
         >
           Vendor
         </button>
         <button 
-          className={`px-3 py-1 rounded ${tabActivo === "vendor" ? "bg-blue-500 text-white" : "bg-gray-200"}`} 
+          className={tabActivo === "vendor" ? "activo" : ""} 
           onClick={() => setTabActivo("vendor")}
         >
           Inhouse
         </button>
         <button 
-          className={`px-3 py-1 rounded ${tabActivo === "calendario" ? "bg-blue-500 text-white" : "bg-gray-200"}`} 
+          className={tabActivo === "calendario" ? "activo" : ""} 
           onClick={() => setTabActivo("calendario")}
         >
           Calendario
